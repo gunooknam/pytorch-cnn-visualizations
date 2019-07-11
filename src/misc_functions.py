@@ -42,6 +42,7 @@ def save_gradient_images(gradient, file_name):
     """
     if not os.path.exists('../results'):
         os.makedirs('../results')
+
     # Normalize
     gradient = gradient - gradient.min()
     gradient /= gradient.max()
@@ -133,7 +134,7 @@ def save_image(im, path):
         path (str): Path to the image
     """
     if isinstance(im, (np.ndarray, np.generic)):
-        im = format_np_output(im)
+        im = format_np_output(im) #  3xWxH
         im = Image.fromarray(im)
     im.save(path)
 
@@ -227,14 +228,15 @@ def get_example_params(example_index):
     img_path = example_list[example_index][0]
     target_class = example_list[example_index][1]
     file_name_to_export = img_path[img_path.rfind('/')+1:img_path.rfind('.')]
+
     # Read image
     original_image = Image.open(img_path).convert('RGB')
     # Process image
-    prep_img = preprocess_image(original_image)
+    prep_img = preprocess_image(original_image) # 노말라이즈 0~1 된 이미지
     # Define model
     pretrained_model = models.alexnet(pretrained=True)
     return (original_image,
             prep_img,
-            target_class,
-            file_name_to_export,
+            target_class, # 해당 클래스 번호
+            file_name_to_export, #
             pretrained_model)

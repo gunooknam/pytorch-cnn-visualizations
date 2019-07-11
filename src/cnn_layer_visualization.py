@@ -10,7 +10,7 @@ import torch
 from torch.optim import Adam
 from torchvision import models
 
-from misc_functions import preprocess_image, recreate_image, save_image
+from src.misc_functions import preprocess_image, recreate_image, save_image
 
 
 class CNNLayerVisualization():
@@ -31,42 +31,49 @@ class CNNLayerVisualization():
     def hook_layer(self):
         def hook_function(module, grad_in, grad_out):
             # Gets the conv output of the selected filter (from selected layer)
-            self.conv_output = grad_out[0, self.selected_filter]
+            # print(grad_out.size()) # 1, 512, 28, 28  feature 나온다.
+            self.conv_output = grad_out[0, self.selected_filter] # 선택된 필터의 feature map 나온다.
         # Hook the selected layer
         self.model[self.selected_layer].register_forward_hook(hook_function)
 
     def visualise_layer_with_hooks(self):
         # Hook the selected layer
-        self.hook_layer()
+        self.hook_layer() # 여기서 선택된 필터
         # Generate a random image
         random_image = np.uint8(np.random.uniform(150, 180, (224, 224, 3)))
         # Process image and return variable
-        processed_image = preprocess_image(random_image, False)
+        processed_image = preprocess_image(random_image, False) # 이미지 제로민 노말라이즈, torch tensor 형태로 만듬
         # Define optimizer for the image
         optimizer = Adam([processed_image], lr=0.1, weight_decay=1e-6)
+
         for i in range(1, 31):
             optimizer.zero_grad()
             # Assign create image to a variable to move forward in the model
             x = processed_image
+
             for index, layer in enumerate(self.model):
                 # Forward pass layer by layer
                 # x is not used after this point because it is only needed to trigger
                 # the forward hook function
                 x = layer(x)
+                # print(">>>",x.size()) => 여기서 forward 해서 계속 feature map이 나온다.
                 # Only need to forward until the selected layer is reached
                 if index == self.selected_layer:
-                    # (forward hook function triggered)
+                    # (forward hook function triggered) => for 문나갈 떄 hook trigger 된다.
                     break
+
             # Loss function is the mean of the output of the selected layer/filter
             # We try to minimize the mean of the output of that specific filter
-            loss = -torch.mean(self.conv_output)
+            # print(self.conv_output.size())
+            loss = -torch.mean(self.conv_output) # 특정 filter 의 output의 mean을 backprob으로 미니마이즈
+            exit()
             print('Iteration:', str(i), 'Loss:', "{0:.2f}".format(loss.data.numpy()))
             # Backward
             loss.backward()
             # Update image
             optimizer.step()
             # Recreate image
-            self.created_image = recreate_image(processed_image)
+            self.created_image = recreate_image(processed_image) # 다시 이미지 형태로 복원
             # Save image
             if i % 5 == 0:
                 im_path = '../generated/layer_vis_l' + str(self.selected_layer) + \

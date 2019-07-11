@@ -5,11 +5,11 @@ Created on Thu Oct 23 11:27:15 2017
 """
 import numpy as np
 
-from misc_functions import (get_example_params,
+from src.misc_functions import (get_example_params,
                             convert_to_grayscale,
                             save_gradient_images)
-from gradcam import GradCam
-from guided_backprop import GuidedBackprop
+from src.gradcam import GradCam
+from src.guided_backprop import GuidedBackprop
 
 
 def guided_grad_cam(grad_cam_mask, guided_backprop_mask):
